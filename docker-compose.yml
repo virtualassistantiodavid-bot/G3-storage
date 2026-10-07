@@ -1,0 +1,55 @@
+services:
+  garage:
+    image: dxflrs/garage:v2.4.1
+    restart: unless-stopped
+
+    command:
+      - /garage
+      - server
+      - --single-node
+      - --default-bucket
+
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY}
+      GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_KEY}
+      GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET:-nextcloud}
+
+    configs:
+      - source: garage-config
+        target: /etc/garage.toml
+
+    volumes:
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+
+    ports:
+      - "3900"
+      - "3902"
+      - "3903"
+
+configs:
+  garage-config:
+    content: |
+      metadata_dir = "/var/lib/garage/meta"
+      data_dir = "/var/lib/garage/data"
+      db_engine = "lmdb"
+
+      replication_factor = 1
+
+      rpc_bind_addr = "[::]:3901"
+      rpc_public_addr = "127.0.0.1:3901"
+      rpc_secret = "${GARAGE_RPC_SECRET}"
+
+      [s3_api]
+      s3_region = "garage"
+      api_bind_addr = "[::]:3900"
+
+      [s3_web]
+      bind_addr = "[::]:3902"
+
+      [admin]
+      api_bind_addr = "[::]:3903"
+
+volumes:
+  garage-meta:
+  garage-data:
